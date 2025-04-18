@@ -3,138 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>运动健康评估系统</title>
+  <title>智能运动健康评估报告</title>
   <link rel="stylesheet" href="tailwind.min.css">
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 </head>
-<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white min-h-screen p-6 font-sans">
+<body class="bg-gray-950 text-white font-sans min-h-screen">
+  <div class="flex h-screen overflow-hidden">
+    <!-- 左侧选项栏 -->
+    <aside class="w-80 bg-gray-900 border-r border-gray-700 p-6 space-y-6 overflow-y-auto">
+      <div class="text-2xl font-bold text-cyan-400">🧭 健康选项</div>
+      <div>
+        <label class="block mb-1">身高（cm）</label>
+        <input id="height" type="number" class="w-full p-2 rounded bg-gray-800 border border-gray-600">
+      </div>
+      <div>
+        <label class="block mb-1">体重（kg）</label>
+        <input id="weight" type="number" class="w-full p-2 rounded bg-gray-800 border border-gray-600">
+      </div>
+      <div>
+        <label class="block mb-1">年龄</label>
+        <input id="age" type="number" class="w-full p-2 rounded bg-gray-800 border border-gray-600">
+      </div>
+      <div>
+        <label class="block mb-1">历史伤病（可选）</label>
+        <input id="injury" type="text" class="w-full p-2 rounded bg-gray-800 border border-gray-600">
+      </div>
+      <div>
+        <label class="block mb-1">运动需求</label>
+        <select id="demand" class="w-full p-2 rounded bg-gray-800 border border-gray-600">
+          <option value="增肌">增肌</option>
+          <option value="减脂">减脂</option>
+          <option value="塑型">塑型</option>
+          <option value="健康">增强健康</option>
+        </select>
+      </div>
+      <div>
+        <button id="parqBtn" class="w-full mt-4 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-4 rounded">运动风险评分（PAR-Q）</button>
+      </div>
+      <button id="evalBtn" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded">立即评估</button>
+    </aside>
 
-  <div class="max-w-3xl mx-auto bg-white/5 rounded-2xl shadow-2xl backdrop-blur-lg p-8">
-    <h1 class="text-4xl font-bold text-center mb-8 tracking-wider text-cyan-400">🏃‍♂️ 智能运动健康评估</h1>
-
-    <!-- 输入区 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <input id="height" type="number" placeholder="📏 身高（cm）" class="p-3 rounded-lg bg-gray-800 border border-gray-600 text-white" />
-      <input id="weight" type="number" placeholder="⚖️ 体重（kg）" class="p-3 rounded-lg bg-gray-800 border border-gray-600 text-white" />
-      <input id="age" type="number" placeholder="🎂 年龄" class="p-3 rounded-lg bg-gray-800 border border-gray-600 text-white" />
-      <input id="injury" type="text" placeholder="🩹 历史伤病（可选）" class="p-3 rounded-lg bg-gray-800 border border-gray-600 text-white" />
-    </div>
-
-    <button id="evalBtn" class="w-full mt-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-lg rounded-lg transition duration-300">开始评估</button>
-
-    <!-- 结果区 -->
-    <div id="result" class="mt-8 space-y-3 text-lg"></div>
-
-    <!-- 图表区 -->
-    <div id="chart" class="mt-8 h-72"></div>
-
-    <!-- 建议卡片区 -->
-    <div id="adviceCard" class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    <!-- 右侧报告展示区 -->
+    <main class="flex-1 p-6 overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-white">📄 运动健康报告</h1>
+        <div class="text-3xl font-bold text-green-400">评分：<span id="score">--</span></div>
+      </div>
+      <div id="report" class="space-y-6">
+        <!-- 动态插入：图表、建议、评分等内容 -->
+      </div>
+    </main>
   </div>
 
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      document.getElementById("evalBtn").addEventListener("click", evaluate);
+  <!-- PAR-Q 弹窗 -->
+  <div id="parqModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+    <div class="bg-gray-900 p-6 rounded-xl w-full max-w-2xl space-y-4 overflow-y-auto max-h-[90vh]">
+      <h2 class="text-2xl font-bold mb-4 text-yellow-300">🏥 PAR-Q 风险问卷</h2>
+      <div class="space-y-3">
+        <div><label class="block">1. 医生是否告知你有心脏病或高血压？</label><select id="q1" class="w-full p-2 rounded bg-gray-800 border border-gray-600"><option value="否">否</option><option value="是">是</option></select></div>
+        <div><label class="block">2. 平时或运动时是否有胸痛？</label><select id="q2" class="w-full p-2 rounded bg-gray-800 border border-gray-600"><option value="否">否</option><option value="是">是</option></select></div>
+        <div><label class="block">3. 最近一年内是否有头晕或昏厥？</label><select id="q3" class="w-full p-2 rounded bg-gray-800 border border-gray-600"><option value="否">否</option><option value="是">是</option></select></div>
+        <div><label class="block">4. 是否有其他慢性疾病？</label><select id="q4" class="w-full p-2 rounded bg-gray-800 border border-gray-600"><option value="否">否</option><option value="是">是</option></select></div>
+        <div><label class="block">5. 是否正在服用慢性病药物？</label><select id="q5" class="w-full p-2 rounded bg-gray-800 border border-gray-600"><option value="否">否</option><option value="是">是</option></select></div>
+        <div><label class="block">6. 骨骼/关节/软组织是否存在影响运动的疾病？</label><select id="q6" class="w-full p-2 rounded bg-gray-800 border border-gray-600"><option value="否">否</option><option value="是">是</option></select></div>
+        <div><label class="block">7. 医生是否说过只能在医生监督下运动？</label><select id="q7" class="w-full p-2 rounded bg-gray-800 border border-gray-600"><option value="否">否</option><option value="是">是</option></select></div>
+      </div>
+      <div class="flex justify-end space-x-4 mt-6">
+        <button onclick="submitParq()" class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">提交问卷</button>
+        <button onclick="closeParq()" class="bg-gray-600 hover:bg-gray-500 text-white py-2 px-4 rounded">取消</button>
+      </div>
+    </div>
+  </div>
 
-      function evaluate() {
-        const height = parseFloat(document.getElementById('height').value);
-        const weight = parseFloat(document.getElementById('weight').value);
-        const age = parseInt(document.getElementById('age').value);
-        const injury = document.getElementById('injury').value;
-
-        if (!height || !weight || !age) {
-          alert('请完整填写身高、体重和年龄');
-          return;
-        }
-
-        const stdWeight = (height - 100) * 0.9;
-        const diff = weight - stdWeight;
-        const bmi = (weight / ((height / 100) ** 2)).toFixed(1);
-
-        let suggestion = '';
-        let type = '';
-        if (diff > 5) {
-          suggestion = '体重偏高：建议减脂训练，搭配低脂饮食。';
-          type = 'high';
-        } else if (diff < -5) {
-          suggestion = '体重偏低：建议增肌训练，补充蛋白质。';
-          type = 'low';
-        } else {
-          suggestion = '体重正常：保持良好习惯即可。';
-          type = 'normal';
-        }
-
-        document.getElementById('result').innerHTML = `
-          <div class="text-blue-400 text-xl">📊 标准体重：<strong>${stdWeight.toFixed(1)} kg</strong></div>
-          <div class="text-yellow-400 text-xl">📈 BMI：<strong>${bmi}</strong></div>
-          <div class="text-red-400 text-xl">⚖️ 体重差值：<strong>${diff.toFixed(1)} kg</strong></div>
-          <div class="text-green-400 font-semibold">💡 ${suggestion}</div>
-        `;
-
-        drawChart(stdWeight, weight);
-        showAdviceCard(type);
-      }
-
-      function drawChart(std, real) {
-        const chartDom = document.getElementById('chart');
-        const myChart = echarts.init(chartDom);
-        const option = {
-          title: { text: '体重对比图', left: 'center', textStyle: { color: '#00ffff' } },
-          tooltip: {},
-          xAxis: { type: 'category', data: ['标准体重', '当前体重'], axisLabel: { color: '#fff' } },
-          yAxis: { type: 'value', axisLabel: { color: '#fff' } },
-          series: [{
-            data: [std, real],
-            type: 'bar',
-            itemStyle: {
-              color: function(params) {
-                return params.dataIndex === 0 ? '#3b82f6' : '#ef4444';
-              }
-            }
-          }]
-        };
-        myChart.setOption(option);
-      }
-
-      function showAdviceCard(type) {
-        let html = '';
-        if (type === 'high') {
-          html = `
-            <div class="bg-red-900/50 p-4 rounded-xl border border-red-500">
-              <h3 class="text-lg font-bold text-red-300">🔥 减脂建议</h3>
-              <ul class="list-disc list-inside text-sm mt-2">
-                <li>每天有氧运动 30-45 分钟（跑步、跳绳）</li>
-                <li>饮食减少油脂、糖类，增加蔬菜</li>
-                <li>控制总热量摄入（TDEE）</li>
-              </ul>
-            </div>
-          `;
-        } else if (type === 'low') {
-          html = `
-            <div class="bg-blue-900/50 p-4 rounded-xl border border-blue-500">
-              <h3 class="text-lg font-bold text-blue-300">💪 增肌建议</h3>
-              <ul class="list-disc list-inside text-sm mt-2">
-                <li>每周抗阻训练 3-5 次（哑铃、深蹲）</li>
-                <li>多摄入蛋白质：鸡蛋、牛奶、鱼肉</li>
-                <li>保证足够睡眠和恢复</li>
-              </ul>
-            </div>
-          `;
-        } else {
-          html = `
-            <div class="bg-green-900/50 p-4 rounded-xl border border-green-500">
-              <h3 class="text-lg font-bold text-green-300">✅ 保持建议</h3>
-              <ul class="list-disc list-inside text-sm mt-2">
-                <li>继续保持训练频率，每周锻炼 ≥ 3 次</li>
-                <li>饮食均衡，适量摄入碳水、蛋白与脂肪</li>
-                <li>定期体测，观察变化</li>
-              </ul>
-            </div>
-          `;
-        }
-        document.getElementById('adviceCard').innerHTML = html;
-      }
-    });
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
